@@ -1,38 +1,33 @@
-const args = require('command-line-args');
+const args = require('commander');
+const { exec } = require('child_process');
 const fs = require('fs-extra');
+const pkg = require('./package.json');
 const path = require('path');
 const request = require('request');
-const st = require('speedtest-net')({ maxTime: 12000 });
-const usage = require('command-line-usage');
+const speedtest = require('speedtest-net');
+
+const CONFIG = 'config';
+const DIR = '.st';
+
+const { hasJob, saveJob, loadJob, delJob } = require('./job')(DIR);
 
 const stats = {};
 
-const optionDefs = [
-  {
-    name: 'command',
-    defaultOption: true,
-  },
-  {
-    name: 'help',
-    alias: 'h',
-    type: Boolean,
-    description: 'Display usage',
-  },
-  {
-    name: 'quiet',
-    alias: 'q',
-    type: Boolean,
-    description: 'Suppress all output',
-  },
-  {
-    name: 'start',
-    description: 'Start automatic testing',
-  },
-  {
-    name: 'stop',
-    description: 'Stop automatic testing',
-  }
-];
+let verbose = false;
+
+/**
+ * Log depending on status of verbose flag
+ * @param s
+ */
+const log = (s) => {
+  if (verbose) console.log(s);
+};
+
+/**
+ * Convenience function
+ * @param n
+ */
+const exit = (n) => process.exit(n);
 
 /**
  * Post speedtest results
@@ -59,7 +54,7 @@ const postResults = (token) => new Promise((resolve, reject) => {
  * Get token from storage
  */
 const getToken = async () => {
-  const filepath = path.resolve(process.env['HOME'], '.st', 'config');
+  const filepath = path.resolve(process.env['HOME'], DIR, CONFIG);
   try {
     return await fs.readJson(filepath);
   } catch (e) {
@@ -71,36 +66,111 @@ const getToken = async () => {
  * Run the test
  */
 const test = async () => {
+  log('Run test');
+
   const token = await getToken();
   if (!token) {
-    console.log('Can\'t find token in ~/.st/config.');
-    process.exit(255);
+    console.log(`Can't find token in ~/${DIR}/${CONFIG}.`);
+    exit(255);
   }
+
+  const st = speedtest({ maxTime: 12000 });
 
   st.on('data', data => {
     stats.data = data;
   });
 
-  st.on('done', () => {
-    postResults(token);
+  st.on('done', async () => {
+    await postResults(token);
   });
 };
 
-const options = args(optionDefs);
-console.log(JSON.stringify(options, null, 3));
-if (options.help) {
-  console.log(usage([
-    {
-      header: 'Options',
-      optionList: optionDefs,
-    }
-  ]));
-  process.exit(0);
-}
+/**
+ * Start persistent testing
+ */
+const startPersistent = async () => {
+  log('Start persistent');
 
-test(options)
-  .catch(err => {
-    if (!options.quiet) {
-      console.log(err);
+  if (await hasJob()) {
+    console.log(`Already started.`);
+    exit(255);
+  }
+
+  const cmd = `echo 'node /home/sander/github/isp-check/index.js run' | at -m now +1 minute`;
+  exec(cmd, async (err, stdout, stderr) => {
+    try {
+      const job = stderr
+        .trim()
+        .replace('\n', ' ')
+        .match(/^.*(job\s+(\d+)\s).*$/)[2];
+
+      log(`New job ${job}`);
+
+       await saveJob(job);
+    } catch (e) {
     }
   });
+};
+
+/**
+ * Stop persistent testing
+ */
+const stopPersistent = async () => {
+  log('Stop persistent');
+
+  if (await hasJob()) {
+    const job = await loadJob();
+    await delJob();
+    const cmd = `atrm ${job}`;
+    exec(cmd, () => {
+      log(`Removed job ${job}`);
+    });
+  } else {
+    console.log('Nothing to stop.');
+  }
+};
+
+/**
+ * Remove job, start persistent, and run test
+ */
+const runPersistentTest = async () => {
+  await delJob();
+  await test();
+  await startPersistent();
+};
+
+const startCmd = (n, f) => {
+  cmdValue = n;
+  return f;
+};
+
+let cmdValue;
+
+args
+  .version(pkg.version, '-v, --version')
+  .option('-q, --quiet', 'Suppress all output')
+  .option('-V, --verbose', 'Show verbose output');
+
+args
+  .command('start')
+  .action(startCmd('start', startPersistent));
+
+args
+  .command('stop')
+  .action(startCmd('stop', stopPersistent));
+
+args
+  .command('run')
+  .action(startCmd('run', runPersistentTest));
+
+args
+  .command('test')
+  .action(startCmd('test', test));
+
+args.parse(process.argv);
+
+verbose = args.verbose;
+
+if (!cmdValue) {
+  exit(0);
+}
