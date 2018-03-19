@@ -68,18 +68,18 @@ const getToken = async () => {
 const test = async () => {
   log('Run test');
 
+  // We need a token to send results to server
   const token = await getToken();
   if (!token) {
     console.log(`Can't find token in ~/${DIR}/${CONFIG}.`);
     exit(255);
   }
 
+  // Create speedtest object and connect event handlers
   const st = speedtest({ maxTime: 12000 });
-
   st.on('data', data => {
     stats.data = data;
   });
-
   st.on('done', async () => {
     await postResults(token);
   });
