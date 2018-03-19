@@ -1,0 +1,24 @@
+{
+  "name": "isp-check",
+  "version": "0.0.1",
+  "description": "Check ISP speeds",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": {
+    "name": "Sander Huijsen",
+    "email": "sander.huijsen@gmail.com"
+  },
+  "bin": "index.js",
+  "engines": {
+    "node": ">=8"
+  },
+  "files": [
+    "index.js"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "speedtest-net": "^1.4.2"
+  }
+}
