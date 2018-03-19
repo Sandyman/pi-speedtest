@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const args = require('commander');
 const { exec } = require('child_process');
 const fs = require('fs-extra');
@@ -98,7 +99,7 @@ const startPersistent = async () => {
     exit(255);
   }
 
-  const cmd = `echo 'node /home/sander/github/isp-check/index.js run' | at -m now +2 hours`;
+  const cmd = `echo 'pi-speedtest run' | at -m now +3 hours`;
   exec(cmd, async (err, stdout, stderr) => {
     try {
       const job = stderr
