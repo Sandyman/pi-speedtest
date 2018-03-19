@@ -47,10 +47,6 @@ st.on('data', data => {
 });
 
 st.on('done', () => {
-  uploadResults();
-});
-
-st.on('error', err => {
-  stats.error = err;
-  uploadResults();
+  uploadResults()
+    .catch(console.log);
 });
