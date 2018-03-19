@@ -13,14 +13,16 @@ const { hasJob, saveJob, loadJob, delJob } = require('./job')(DIR);
 
 const stats = {};
 
-let verbose = false;
+const options = {
+  verbose: false,
+};
 
 /**
  * Log depending on status of verbose flag
  * @param s
  */
 const log = (s) => {
-  if (verbose) console.log(s);
+  if (options.verbose) console.log(s);
 };
 
 /**
@@ -134,11 +136,18 @@ const stopPersistent = async () => {
  * Remove job, start persistent, and run test
  */
 const runPersistentTest = async () => {
-  await delJob();
+  if (await hasJob()) {
+    await delJob();
+  }
   await test();
   await startPersistent();
 };
 
+/**
+ * Convenience function
+ * @param n
+ * @param f
+ */
 const startCmd = (n, f) => {
   cmdValue = n;
   return f;
@@ -169,7 +178,7 @@ args
 
 args.parse(process.argv);
 
-verbose = args.verbose;
+options.verbose = !!args.verbose;
 
 if (!cmdValue) {
   exit(0);
