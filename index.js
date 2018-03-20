@@ -33,6 +33,31 @@ const log = (s) => {
 const exit = (n) => process.exit(n);
 
 /**
+ * We're not interested in all stats
+ */
+const mapStats = () => {
+  const { speeds, client, server } = stats.data;
+  return {
+    data: {
+      speeds: {
+        download: speeds.download,
+        upload: speeds.upload,
+      },
+      client: {
+        isp: client.isp,
+      },
+      server: {
+        cc: server.cc,
+        country: server.country,
+        id: server.id,
+        location: server.location,
+        ping: server.ping,
+      }
+    }
+  };
+};
+
+/**
  * Post speedtest results
  * @param token
  */
@@ -43,7 +68,7 @@ const postResults = (token) => new Promise((resolve, reject) => {
       'Content-Type': 'appication/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify(stats),
+    body: JSON.stringify(mapStats()),
   };
   request.post(options, (err, response, body) => {
     if (err) return reject(err);
@@ -56,7 +81,7 @@ const postResults = (token) => new Promise((resolve, reject) => {
 /**
  * Get token from storage
  */
-const getToken = async () => {
+const tokenRead = async () => {
   const filepath = path.resolve(process.env['HOME'], DIR, CONFIG);
   try {
     return await fs.readJson(filepath);
@@ -72,7 +97,7 @@ const test = async () => {
   log('Run test');
 
   // We need a token to send results to server
-  const token = await getToken();
+  const token = await tokenRead();
   if (!token) {
     console.log(`Can't find token in ~/${DIR}/${CONFIG}.`);
     exit(255);
@@ -85,6 +110,7 @@ const test = async () => {
   });
   st.on('done', async () => {
     await postResults(token);
+    log(JSON.stringify(stats.data, null, 3));
   });
 };
 
