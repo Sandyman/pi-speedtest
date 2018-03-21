@@ -118,6 +118,7 @@ const test = async () => {
     await testApiEndpoint();
   } catch (e) {
     log(e);
+    await stopPersistent();
     exit(255);
   }
 
