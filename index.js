@@ -18,6 +18,7 @@ const stats = {};
 
 const options = {
   verbose: false,
+  runNow: false,
 };
 
 /**
@@ -114,6 +115,8 @@ const tokenRead = async () => {
  * Run the test
  */
 const test = async () => {
+  log('Run test');
+
   try {
     await testApiEndpoint();
   } catch (e) {
@@ -121,8 +124,6 @@ const test = async () => {
     await stopPersistent();
     exit(255);
   }
-
-  log('Run test');
 
   // We need a token to send results to server
   const token = await tokenRead();
@@ -157,6 +158,13 @@ const startPersistent = async () => {
     exit(255);
   }
 
+  try {
+    await testApiEndpoint();
+  } catch (e) {
+    log(e);
+    exit(255);
+  }
+
   const cmd = `echo 'pi-speedtest run' | at -m now +3 hours`;
   exec(cmd, async (err, stdout, stderr) => {
     try {
@@ -171,6 +179,11 @@ const startPersistent = async () => {
     } catch (e) {
     }
   });
+
+  // Let's run the first test immediately
+  if (options.runNow) {
+    await test();
+  }
 };
 
 /**
@@ -205,9 +218,10 @@ const runPersistentTest = async () => {
 /**
  * Convenience function
  * @param n
- * @param f
+ * @param parent
  */
-const startCmd = (n, f) => {
+const startCmd = (n, { parent }) => f => {
+  options.verbose = !!parent.verbose;
   cmdValue = n;
   return f;
 };
@@ -221,19 +235,23 @@ args
 
 args
   .command('start')
-  .action(startCmd('start', startPersistent));
+  .option('-r, --run-now', 'Run immediate test upon start')
+  .action(cmd => {
+    options.runNow = !!cmd.runNow;
+    return startCmd('start', cmd)(startPersistent)();
+  });
 
 args
   .command('stop')
-  .action(startCmd('stop', stopPersistent));
+  .action(cmd => startCmd('stop', cmd)(stopPersistent)());
 
 args
   .command('run')
-  .action(startCmd('run', runPersistentTest));
+  .action(cmd => startCmd('run', cmd)(runPersistentTest)());
 
 args
   .command('test')
-  .action(startCmd('test', test));
+  .action(cmd => startCmd('test', cmd)(test));
 
 args.parse(process.argv);
 
