@@ -7,6 +7,8 @@ const path = require('path');
 const request = require('request');
 const speedtest = require('speedtest-net');
 
+const API_ENDPOINT = 'https://api.pi-speedtest.net';
+const API_VERSION = 'v1';
 const CONFIG = 'config';
 const DIR = '.st';
 
@@ -58,14 +60,32 @@ const mapStats = () => {
 };
 
 /**
+ * Test API endpoint
+ */
+const testApiEndpoint = () => new Promise((resolve, reject) => {
+  const options = {
+    url: `${API_ENDPOINT}/${API_VERSION}/sample`,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+  request.options(options, (err, response, body) => {
+    if (err) return reject(err);
+    if (response.statusCode !== 200) return reject(new Error(`code ${response.statusCode}`));
+
+    return resolve();
+  });
+});
+
+/**
  * Post speedtest results
  * @param token
  */
 const postResults = (token) => new Promise((resolve, reject) => {
   const options = {
-    url: 'https://log8rdq0jd.execute-api.us-east-1.amazonaws.com/dev/sample',
+    url: `${API_ENDPOINT}/${API_VERSION}/sample`,
     headers: {
-      'Content-Type': 'appication/json',
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify(mapStats()),
@@ -94,6 +114,13 @@ const tokenRead = async () => {
  * Run the test
  */
 const test = async () => {
+  try {
+    await testApiEndpoint();
+  } catch (e) {
+    log(e);
+    exit(255);
+  }
+
   log('Run test');
 
   // We need a token to send results to server
@@ -109,8 +136,12 @@ const test = async () => {
     stats.data = data;
   });
   st.on('done', async () => {
-    await postResults(token);
-    log(JSON.stringify(stats.data, null, 3));
+    try {
+      await postResults(token);
+      log(JSON.stringify(stats.data, null, 3));
+    } catch (e) {
+      log(e);
+    }
   });
 };
 
