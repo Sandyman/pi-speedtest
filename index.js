@@ -165,7 +165,9 @@ const startPersistent = async () => {
     exit(255);
   }
 
-  const cmd = `echo 'pi-speedtest run' | at now +3 hours`;
+  // Next measurement is (+4h +/- 2h)
+  const delay = Math.floor(Math.random() * 240 + 120);
+  const cmd = `echo 'pi-speedtest run' | at now +${delay} minutes`;
   exec(cmd, async (err, stdout, stderr) => {
     try {
       const job = stderr
