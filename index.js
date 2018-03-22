@@ -251,7 +251,7 @@ args
 
 args
   .command('test')
-  .action(cmd => startCmd('test', cmd)(test));
+  .action(cmd => startCmd('test', cmd)(test)());
 
 args.parse(process.argv);
 
