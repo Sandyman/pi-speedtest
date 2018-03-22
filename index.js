@@ -165,7 +165,7 @@ const startPersistent = async () => {
     exit(255);
   }
 
-  const cmd = `echo 'pi-speedtest run' | at -m now +3 hours`;
+  const cmd = `echo 'pi-speedtest run' | at now +3 hours`;
   exec(cmd, async (err, stdout, stderr) => {
     try {
       const job = stderr
