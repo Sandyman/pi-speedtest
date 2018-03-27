@@ -2,6 +2,7 @@
 const args = require('commander');
 const { exec } = require('child_process');
 const fs = require('fs-extra');
+const yaml = require('js-yaml');
 const pkg = require('./package.json');
 const path = require('path');
 const request = require('request');
@@ -102,10 +103,10 @@ const postResults = (token) => new Promise((resolve, reject) => {
 /**
  * Get token from storage
  */
-const tokenRead = async () => {
+const tokenRead = () => {
   const filepath = path.resolve(process.env['HOME'], DIR, CONFIG);
   try {
-    return await fs.readJson(filepath);
+    return yaml.safeLoad(fs.readFileSync(filepath, 'utf8')).token;
   } catch (e) {
     return null;
   }
@@ -126,9 +127,9 @@ const test = async () => {
   }
 
   // We need a token to send results to server
-  const token = await tokenRead();
+  const token = tokenRead();
   if (!token) {
-    console.log(`Can't find token in ~/${DIR}/${CONFIG}.`);
+    console.log(`Can't find token in ~/${DIR}/${CONFIG}`);
     exit(255);
   }
 
