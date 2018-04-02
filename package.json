@@ -15,7 +15,8 @@
     "node": ">=8"
   },
   "files": [
-    "index.js"
+    "index.js",
+    "job.js"
   ],
   "license": "ISC",
   "dependencies": {
