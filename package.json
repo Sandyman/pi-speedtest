@@ -1,6 +1,6 @@
 {
   "name": "pi-speedtest",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Check ISP speeds using a Raspberry Pi",
   "main": "index.js",
   "scripts": {
