@@ -22,13 +22,13 @@ the "Copy" button (it's the button with the clipboard on it) and store it on you
 
 (or use your own favourite editor). Your file should look something like this:
 
-token 5f598b0a6717ac43df0d13340ac943a4fcd3992c28f435421d6fd442c6fd448b
+`token 5f598b0a6717ac43df0d13340ac943a4fcd3992c28f435421d6fd442c6fd448b`
 
 Next, you need to install the command `at`. This is a utility that allows for scheduling commands at a certain time.
 This module uses `at` to schedule the next measurement. If you are using a Debian based distribution on your Pi, you
 should be able to install at like so:
 
-$ sudo apt install at
+```$ sudo apt install at```
 
 and follow the prompt that may occur.
 
@@ -43,7 +43,7 @@ This will install the module globally. You can run using using the command `pi-s
 
 You can run a single test using this command:
 
-```$ pi-speedtest -V```
+```$ pi-speedtest test -V```
 
 The flag -V means "verbose". Omitting it will turn the module silent.
 
@@ -61,7 +61,8 @@ Now, you can start continuously measuring your internet connection speed:
 
 This will set up a recurring call to the module in order to measure the speed. At any time you can check that a
 measurement is scheduled by running the command `atq`. Measurements occur at slightly random times, but on average
-six times a day, or once every four hours or so.
+six times a day, or once every four hours or so. You can use the option `-r` to run an immediate test in addition
+to starting scheduled testing.
 
 You can stop continuous measurements by running this command:
 
@@ -72,6 +73,9 @@ You can stop continuous measurements by running this command:
 The recurring call will now be removed. Please note that you can run a manual test at any time using the command:
 
 ```$ pi-speedtest test -V```
+
+If you'd rather not run 6 measurements a day, you can also install a cron job to run, for instance, daily. That will
+greatly reduce the amount of data used for speed testing.
 
 ## Disclaimer
 
