@@ -20,6 +20,7 @@ const stats = {};
 const options = {
   verbose: false,
   runNow: false,
+  delay: 0,
 };
 
 /**
@@ -149,6 +150,19 @@ const test = async () => {
 };
 
 /**
+ * Calculate delay including some randomness
+ */
+const calcDelay = () => {
+  let delay = options.delay;
+
+  if (delay === 0) return Math.floor(Math.random() * 240 + 120);
+
+  if (delay > 720) delay = 720;
+  if (delay < 60) delay = 60;
+  return delay;
+};
+
+/**
  * Start persistent testing
  */
 const startPersistent = async () => {
@@ -167,7 +181,7 @@ const startPersistent = async () => {
   }
 
   // Next measurement is (+4h +/- 2h)
-  const delay = Math.floor(Math.random() * 240 + 120);
+  const delay = calcDelay();
   const cmd = `echo 'pi-speedtest run' | at now +${delay} minutes`;
   exec(cmd, async (err, stdout, stderr) => {
     try {
@@ -178,7 +192,7 @@ const startPersistent = async () => {
 
       log(`New job ${job}`);
 
-       await saveJob(job);
+      await saveJob(job);
     } catch (e) {
     }
   });
@@ -238,8 +252,10 @@ args
 
 args
   .command('start')
+  .option('-d, --delay [delay]')
   .option('-r, --run-now', 'Run immediate test upon start')
   .action(cmd => {
+    options.delay = cmd.delay || 0;
     options.runNow = !!cmd.runNow;
     return startCmd('start', cmd)(startPersistent)();
   });
