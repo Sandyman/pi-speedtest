@@ -252,7 +252,7 @@ args
 
 args
   .command('start')
-  .option('-d, --delay [delay]')
+  .option('-d, --delay [delay]', 'Delay (in minutes) between successive runs')
   .option('-r, --run-now', 'Run immediate test upon start')
   .action(cmd => {
     options.delay = cmd.delay || 0;
